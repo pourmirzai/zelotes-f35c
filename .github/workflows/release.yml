@@ -21,13 +21,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Build standalone binary
+      - name: Install GUI dependencies (Linux webview)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev
+      - name: Build standalone binaries
         run: |
-          pip install pyinstaller
+          pip install pyinstaller pywebview
           pyinstaller --onefile --name f35c f35c.py
-          chmod +x dist/f35c
+          pyinstaller --onefile --name f35c-gui --collect-all webview f35c_gui.py
+          chmod +x dist/f35c dist/f35c-gui
           ./dist/f35c --version
-          cd dist && tar czf "../${{ matrix.artifact }}.tar.gz" f35c
+          cd dist && tar czf "../${{ matrix.artifact }}.tar.gz" f35c f35c-gui
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}

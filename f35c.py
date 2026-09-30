@@ -31,7 +31,7 @@ import select
 import sys
 import time
 
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
 PIDS = (0x2261, 0x222E)
 

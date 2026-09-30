@@ -169,10 +169,15 @@ def set_profile(dev, n):
     return {'ok': True}
 
 
+LAST_RGB = [0xff, 0x40, 0x00]  # remember color across mode changes
+
+
 @with_dev
-def set_light(dev, r, g, b, m):
-    dev._light(rgb=(int(r), int(g), int(b)))
-    dev._light(mode=int(m))
+def set_light(dev, r=None, g=None, b=None, m=None):
+    if r is not None:
+        LAST_RGB[:] = [int(r), int(g), int(b)]
+    rgb = tuple(LAST_RGB) if m is not None or r is not None else None
+    dev._light(rgb=rgb, mode=None if m is None else int(m))
     return {'ok': True}
 
 
@@ -218,7 +223,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.path == '/api/set-profile':
                 return self._json(set_profile(data['n']))
             if self.path == '/api/set-light':
-                return self._json(set_light(data['r'], data['g'], data['b'], data['m']))
+                if data.get('color_only'):
+                    return self._json(set_light(data['r'], data['g'], data['b']))
+                return self._json(set_light(data.get('r'), data.get('g'),
+                                             data.get('b'), data.get('m')))
         except Exception as e:
             return self._json({'error': str(e)}, 500)
         self._json({'error': 'unknown'}, 404)

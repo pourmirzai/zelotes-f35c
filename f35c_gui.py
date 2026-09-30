@@ -211,6 +211,8 @@ class Handler(BaseHTTPRequestHandler):
         n = int(self.headers.get('Content-Length') or 0)
         data = json.loads(self.rfile.read(n) or b'{}')
         try:
+            if self.path.startswith('/api/status'):
+                return self._json(status())
             if self.path == '/api/set-stages':
                 return self._json(set_stages(data['stages']))
             if self.path == '/api/set-profile':

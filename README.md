@@ -10,8 +10,10 @@ Working today (verified on hardware):
   react-to-click / off
 - Light color (RGB; the red channel renders ~half brightness on the LED)
 
-The same 33-byte report-ID-4 packets work on macOS via IOHIDManager —
-a Swift/native port is a straightforward translation of f35c.py.
+macOS: the same 33-byte report-ID-4 packets via IOHIDManager
+(`f35c_darwin.py`, experimental — untested on real hardware; the
+binary may need `xattr -cr f35c` to pass Gatekeeper). Linux is the
+reference platform.
 
 ## Install (one time, needs sudo)
 

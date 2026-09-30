@@ -31,9 +31,10 @@ import select
 import sys
 import time
 
-__version__ = '0.2.3'
+__version__ = '0.3.0'
 
 PIDS = (0x2261, 0x222E)
+REPORT_ID = 0x04
 
 PAGE00 = '0474040618000000000504010000ff720000000201010100e803e803ff00000102'
 PAGE18 = '04cf040618180000000807080700ff000100280a280a0000ff0100800c800cff02'
@@ -71,7 +72,12 @@ class F35CError(Exception):
     pass
 
 
+IS_MAC = sys.platform == 'darwin'
+
+
 def find_device():
+    if IS_MAC:
+        return 'iohidmanager'
     for pid in PIDS:
         for hr in sorted(glob.glob('/sys/class/hidraw/hidraw*')):
             try:
@@ -88,18 +94,35 @@ class F35C:
         path = path or find_device()
         if not path:
             raise F35CError('F-35C not found (320f:2261 dongle / 320f:222e wired)')
+        self.path = path
+        if IS_MAC:
+            import f35c_darwin
+            try:
+                self.mac = f35c_darwin.MacHID()
+            except RuntimeError as e:
+                raise F35CError(str(e))
+            self.fd = None
+            return
+        self.mac = None
         try:
             self.fd = os.open(path, os.O_RDWR | os.O_NONBLOCK)
         except PermissionError:
             raise F35CError(f'no permission for {path} (udev rule + replug, or sudo)')
-        self.path = path
         self.pages = dict(PAGE00=PAGE00, PAGE18=PAGE18, PAGE30=PAGE30, PAGE48=PAGE48)
 
     def close(self):
-        os.close(self.fd)
+        if self.mac:
+            self.mac.close()
+        else:
+            os.close(self.fd)
 
     def send(self, hexstr, wait=0.35):
-        os.write(self.fd, bytes.fromhex(hexstr))
+        data = bytes.fromhex(hexstr)
+        if self.mac:
+            self.mac.write(data[1:] if data[0] == REPORT_ID else data)
+            time.sleep(wait)
+            return None
+        os.write(self.fd, data)
         end = time.time() + wait
         echo = None
         while time.time() < end:

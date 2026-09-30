@@ -1,0 +1,39 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: zelotes-f35c-linux-x86_64
+          - os: macos-latest
+            artifact: zelotes-f35c-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build standalone binary
+        run: |
+          pip install pyinstaller
+          pyinstaller --onefile --name f35c f35c.py
+          chmod +x dist/f35c
+          ./dist/f35c --version
+          cd dist && tar czf "../${{ matrix.artifact }}.tar.gz" f35c
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}.tar.gz
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.artifact }}.tar.gz
+          generate_release_notes: true

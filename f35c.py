@@ -31,6 +31,8 @@ import select
 import sys
 import time
 
+__version__ = '0.1.0'
+
 PIDS = (0x2261, 0x222E)
 
 PAGE00 = '0474040618000000000504010000ff720000000201010100e803e803ff00000102'
@@ -148,7 +150,8 @@ class F35C:
 
 
 def main():
-    ap = argparse.ArgumentParser(description='Zelotes F-35C configuration tool')
+    ap = argparse.ArgumentParser(description=f'Zelotes F-35C configuration tool v{__version__}')
+    ap.add_argument('--version', action='version', version=__version__)
     sub = ap.add_subparsers(dest='cmd', required=True)
     sub.add_parser('info', help='show device path and check echo')
     p = sub.add_parser('set-stage', help='set DPI of stage 1..5')

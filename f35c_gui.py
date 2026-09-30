@@ -233,7 +233,7 @@ def main():
                               width=920, height=760, min_size=(520, 620))
         webview.start()
         srv.shutdown()
-    except ImportError:
+    except Exception:
         print(f'zelotes-f35c GUI v{f35c.__version__} — {url}  (Ctrl+C to quit)')
         threading.Timer(0.5, lambda: webbrowser.open(url)).start()
         try:
